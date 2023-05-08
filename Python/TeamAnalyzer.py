@@ -17,33 +17,39 @@ for i, arg in enumerate(sys.argv):
     if i == 0:
         continue
 
-for pokemon_id in sys.argv[1:]:
-    pokemon_name = curr.execute(
-    "SELECT name FROM pokemon WHERE id=?", (pokemon_id,)).fetchone()
-    name = pokemon_name[0]
-    print("Analyzing " + str(pokemon_id))
+    for pokemon_id in sys.argv[1:]:
+        pokemon_name = curr.execute(
+        "SELECT name FROM pokemon WHERE id=?", (pokemon_id,)).fetchone()
+        name = pokemon_name[0]
+        print("Analyzing " + str(pokemon_id))
 
-    type1 = curr.execute(
-        "SELECT type1 FROM pokemon_types_view WHERE name=?", (pokemon_name[0],)).fetchall()
-    type2 = curr.execute(
-        "SELECT type2 FROM pokemon_types_view WHERE name=?", (pokemon_name[0],)).fetchall()
+        type1 = curr.execute(
+            "SELECT type1 FROM pokemon_types_view WHERE name=?", (pokemon_name[0],)).fetchone()[0]
+        type2 = curr.execute(
+            "SELECT type2 FROM pokemon_types_view WHERE name=?", (pokemon_name[0],)).fetchone()[0]
 
-
-    strengths = []
-    weaknesses = []
     for t in types:
-        against = curr.execute("SELECT against_dark, against_dragon, against_electric, against_fairy, against_fight, against_fire, against_flying, against_ghost, against_grass, against_ground, against_ice, against_normal, against_poison, against_psychic, against_rock, against_steel, against_water FROM pokemon_types_battle_view WHERE type1name=? AND type2name=?", (type1[0][0], type2[0][0])).fetchone()
-        if against > 1:
+        strengths = []
+        weaknesses = []
+        print(curr.execute("SELECT against_dark, against_dragon, against_electric, against_fairy, against_fight, against_fire, against_flying, against_ghost, against_grass, against_ground, against_ice, against_normal, against_poison, against_psychic, against_rock, against_steel, against_water FROM pokemon_types_battle_view WHERE type1name=? AND type2name=?", (type1, type2)).fetchone())
+        against = curr.execute("SELECT against_dark, against_dragon, against_electric, against_fairy, against_fight, against_fire, against_flying, against_ghost, against_grass, against_ground, against_ice, against_normal, against_poison, against_psychic, against_rock, against_steel, against_water FROM pokemon_types_battle_view WHERE type1name=? AND type2name=?", (type1, type2)).fetchone()
+    for k, val in enumerate(against):
+        if val > 1:
+                strengths.append(types[k])
+        elif val < 1:
+                weaknesses.append(types[k])
+
+        if against[types.index(t)] > 1:
             strengths.append(t)
-        elif against < 1:
+        elif against[types.index(t)] is not None and against[types.index(t)] < 1:
             weaknesses.append(t)
 
-    print(f"{name} ({type1}, {type2}):")
-    print("Strong against:", strengths)
-    print("Weak against:", weaknesses)
-    print()
+        print(f"{name} ({type1}, {type2}):")
+        print("Strong against:", strengths)
+        print("Weak against:", weaknesses)
+        print()
 
-    team.append(name)
+        team.append(name)
 
 answer = input("Would you like to save this team? (Y)es or (N)o: ")
 if answer.upper() == "Y" or answer.upper() == "YES":
